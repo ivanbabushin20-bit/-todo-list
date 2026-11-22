@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои задачи</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 10px 35px #0003;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .add-btn {
+            padding: 12px 18px;
+            background: #667eea;
+            color: white;
+            font-size: 15px;
+        }
+
+        .add-btn:hover {
+            background: #5365d5;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 22px 0 12px;
+            color: #777;
+            font-size: 14px;
+        }
+
+        ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px;
+            margin-bottom: 10px;
+            background: #f5f6fa;
+            border-radius: 9px;
+        }
+
+        li span {
+            flex: 1;
+            overflow-wrap: anywhere;
+            color: #333;
+        }
+
+        li.completed span {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .check-btn {
+            width: 23px;
+            height: 23px;
+            border: 2px solid #667eea;
+            background: white;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        li.completed .check-btn {
+            background: #667eea;
+        }
+
+        .delete-btn {
+            padding: 7px 10px;
+            background: #ffe5e5;
+            color: #e04444;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: #ffcaca;
+        }
+
+        .empty {
+            text-align: center;
+            color: #aaa;
+            padding: 25px 0;
+        }
+
+        .clear-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 11px;
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .clear-btn:hover {
+            background: #e4e4e4;
+        }
+
+        @media (max-width: 420px) {
+            .container {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .add-btn {
+                padding: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Мои задачи</h1>
+    <p class="subtitle">Планируй свой день и достигай целей!</p>
+
+    <div class="input-group">
+        <input
+            type="text"
+            id="taskInput"
+            placeholder="Введите новую задачу..."
+        >
+        <button class="add-btn" onclick="addTask()">
+            Добавить
+        </button>
+    </div>
+
+    <div class="stats">
+        <span id="total">Всего: 0</span>
+        <span id="remaining">Осталось: 0</span>
+    </div>
+
+    <ul id="taskList"></ul>
+
+    <button class="clear-btn" onclick="clearCompleted()">
+        Удалить выполненные
+    </button>
+</div>
+
+<script>
+    let tasks = JSON.parse(
+        localStorage.getItem("tasks")
+    ) || [];
+
+    function saveTasks() {
+        localStorage.setItem(
+            "tasks",
+            JSON.stringify(tasks)
+        );
+    }
+
+    function addTask() {
+        const input = document.getElementById("taskInput");
+        const text = input.value.trim();
+
+        if (text === "") {
+            alert("Введите название задачи!");
+            return;
+        }
+
+        tasks.push({
+            id: Date.now(),
+            text: text,
+            completed: false
+        });
+
+        input.value = "";
+
+        saveTasks();
+        renderTasks();
+    }
+
+    function toggleTask(id) {
+        tasks = tasks.map(task => {
+            if (task.id === id) {
+                task.completed = !task.completed;
+            }
+            return task;
+        });
+
+        saveTasks();
+        renderTasks();
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(task => task.id !== id);
+
+        saveTasks();
+        renderTasks();
+    }
+
+    function clearCompleted() {
+        tasks = tasks.filter(task => !task.completed);
+
+        saveTasks();
+        renderTasks();
+    }
+
+    function renderTasks() {
+        const list = document.getElementById("taskList");
+        list.innerHTML = "";
+
+        if (tasks.length === 0) {
+            list.innerHTML =
+                '<li class="empty">Пока нет задач. Добавьте первую!</li>';
+        }
+
+        tasks.forEach(task => {
+            const li = document.createElement("li");
+
+            if (task.completed) {
+                li.classList.add("completed");
+            }
+
+            const check = document.createElement("button");
+            check.className = "check-btn";
+            check.textContent = task.completed ? "✓" : "";
+            check.onclick = () => toggleTask(task.id);
+            check.setAttribute("aria-label", "Отметить задачу");
+
+            const span = document.createElement("span");
+            span.textContent = task.text;
+
+            const remove = document.createElement("button");
+            remove.className = "delete-btn";
+            remove.textContent = "Удалить";
+            remove.onclick = () => deleteTask(task.id);
+
+            li.append(check, span, remove);
+            list.appendChild(li);
+        });
+
+        const completed = tasks.filter(
+            task => task.completed
+        ).length;
+
+        document.getElementById("total").textContent =
+            "Всего: " + tasks.length;
+
+        document.getElementById("remaining").textContent =
+            "Осталось: " + (tasks.length - completed);
+    }
+
+    document.getElementById("taskInput")
+        .addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                addTask();
+            }
+        });
+
+    renderTasks();
+</script>
+
+</body>
+</html>
